@@ -3,15 +3,10 @@ const { connectDb } = require("../config/database");
 const User = require("../models/user");
 const app = express();
 
-
+app.use(express.json());
 app.post("/signup",async(req,res)=> {
 
-    const user = new User({
-        firstName:"Kholi",
-        lastName: "virat",
-        emailId: "viratkholi@gmail.com",
-        password:"viratkholi@123"
-    });
+    const user = new User(req.body);
     try { 
         await user.save();
         res.send("Users created successfully");
@@ -20,9 +15,6 @@ app.post("/signup",async(req,res)=> {
         res.status(400).send("Error while creating user");
     }   
 });
-
-
-
 
 connectDb()
     .then(()=>{
