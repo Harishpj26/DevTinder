@@ -16,6 +16,39 @@ app.post("/signup",async(req,res)=> {
     }   
 });
 
+app.get("/user", async (req,res) =>{
+    const userEmailId = req.body.emailId;
+    try {
+        const user = await User.find({emailId:userEmailId});
+        if(user.length!=0) { 
+            res.send(users);
+        } 
+        else { 
+            res.status(404).send("User not Found");
+        } 
+    }
+    catch(err) {
+        res.status(400).send("Failed to load feed");
+    }
+});
+
+app.get("/feed",async (req,res) => {
+    try {
+        const users = await User.find({})
+        if(users.length===0) {
+            res.status(404).send("This application doesnt have any active user currenly");
+        }
+        else {
+            res.send(users);
+        }
+    }
+    catch(err) {
+        res.status(400).send("Couldnt able to load feed");
+    }  
+});
+
+
+
 connectDb()
     .then(()=>{
         console.log("Database connection established"); 
