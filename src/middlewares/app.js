@@ -1,12 +1,15 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
 const validator = require("validator");
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
 const { connectDb } = require("../config/database");
 const {validateSignupData} = require("../utils/validator");
 const User = require("../models/user");
 const app = express();
 
-app.use(express.json());
+app.use(express.json());            // middleware to perfrom 
+app.use(cookieParser()); 
 app.post("/signup",async(req,res)=> {
     try { 
         validateSignupData(req.body);
@@ -40,6 +43,11 @@ app.post("/login",async(req,res)=>{
             }
             const isValidPassword = await bcrypt.compare(password,user.password);
             if(isValidPassword) {
+                //create JWT token 
+                const token = await jwt.sign( {_id:user._id} , "HaaHuu@12345");
+                console.log(token);
+                // add the tocken into the cookie and send the response to the user
+                res.cookie("token",token);
                 res.send("Login successfully!!!");
             }
             else {
@@ -66,7 +74,6 @@ app.get("/user", async (req,res) =>{
         res.status(400).send("Failed to fetch User data");
     }
 });
-
 app.get("/feed",async (req,res) => {
     try {
         const users = await User.find({})
@@ -81,7 +88,31 @@ app.get("/feed",async (req,res) => {
         res.status(400).send("Couldnt able to load feed");
     }  
 });
-
+app.get("/profile",async(req,res)=> {
+    const cookies = req.cookies;
+    const { token } = cookies;
+    try {
+        if(!token) {
+            throw new Error("Invalid Token");
+        }
+        else {
+             //validate my token
+            const decodedMessage = jwt.verify(token,"HaaHuu@12345");
+            const {_id} =decodedMessage;
+            const user = await User.findById(_id);
+            if(!user) {
+                throw new Error("User Doesnt exist");
+            }
+            console.log("The Logged in User was "+user.firstName);
+            res.send(user);
+        }
+    }
+    catch(err) {
+        res.send("Couldnt able to get user Details : "+err.message);
+    }
+   
+    
+});
 app.delete("/user",async (req,res)=> {
     const userId=req.body.id;
     try {
